@@ -14,7 +14,7 @@ import os
 from distutils.util import strtobool
 from typing import Dict
 
-from lib import Deepgrow, MyTrain, Segmentation
+from lib import Deepgrow, DeepgrowScribbles, MyTrain, Segmentation
 from lib.activelearning import MyStrategy
 from monai.networks.nets.dynunet_v1 import DynUNetV1
 
@@ -121,6 +121,12 @@ class MyApp(MONAILabelApp):
                 target_spacing=self.planner.target_spacing,
             ),
             "deepedit_seg": Segmentation(
+                [self.pretrained_model, self.final_model],
+                self.network,
+                spatial_size=self.planner.spatial_size,
+                target_spacing=self.planner.target_spacing,
+            ),
+            "deepedit_scribbles": DeepgrowScribbles(
                 [self.pretrained_model, self.final_model],
                 self.network,
                 spatial_size=self.planner.spatial_size,

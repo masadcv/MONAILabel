@@ -27,6 +27,7 @@ from monai.transforms import (
 
 from monailabel.deepedit.transforms import DiscardAddGuidanced, ResizeGuidanceCustomd, SingleLabelSingleModalityd
 from monailabel.interfaces.tasks.infer import InferTask, InferType
+from monailabel.scribbles.transforms import AddGuidanceFromScribblesd
 from monailabel.transform.post import Restored
 
 
@@ -121,6 +122,70 @@ class Deepgrow(InferTask):
     def pre_transforms(self):
         return [
             LoadImaged(keys="image", reader="nibabelreader"),
+            SingleLabelSingleModalityd(keys="image"),
+            AddChanneld(keys="image"),
+            Spacingd(keys="image", pixdim=self.target_spacing, mode="bilinear"),
+            Orientationd(keys="image", axcodes="RAS"),
+            SqueezeDimd(keys="image", dim=0),
+            AddGuidanceFromPointsd(ref_image="image", guidance="guidance", dimensions=3),
+            AddChanneld(keys="image"),
+            NormalizeIntensityd(keys="image"),
+            Resized(keys="image", spatial_size=self.spatial_size, mode="area"),
+            ResizeGuidanceCustomd(guidance="guidance", ref_image="image"),
+            AddGuidanceSignald(image="image", guidance="guidance"),
+            ToTensord(keys="image"),
+        ]
+
+    def inferer(self):
+        return SimpleInferer()
+
+    def post_transforms(self):
+        return [
+            ToTensord(keys="pred"),
+            Activationsd(keys="pred", sigmoid=True),
+            AsDiscreted(keys="pred", threshold_values=True, logit_thresh=0.51),
+            ToNumpyd(keys="pred"),
+            Restored(keys="pred", ref_image="image"),
+        ]
+
+
+class DeepgrowScribbles(InferTask):
+    """
+    This provides Inference Engine for Deepgrow over DeepEdit model.
+    """
+
+    def __init__(
+        self,
+        path,
+        network=None,
+        type=InferType.SCRIBBLES,
+        dimension=3,
+        description="A pre-trained 3D DeepGrow model based on UNET",
+        spatial_size=(128, 128, 64),
+        target_spacing=(1.0, 1.0, 1.0),
+    ):
+        super().__init__(
+            path=path,
+            network=network,
+            type=type,
+            labels=None,
+            dimension=dimension,
+            description=description,
+        )
+
+        self.spatial_size = spatial_size
+        self.target_spacing = target_spacing
+
+    def pre_transforms(self):
+        return [
+            LoadImaged(keys=["image", "label"], reader="nibabelreader"),
+            AddGuidanceFromScribblesd(
+                scribbles="label",
+                scribbles_bg_label=2,
+                scribbles_fg_label=3,
+                background="background",
+                foreground="foreground",
+            ),
             SingleLabelSingleModalityd(keys="image"),
             AddChanneld(keys="image"),
             Spacingd(keys="image", pixdim=self.target_spacing, mode="bilinear"),

@@ -780,3 +780,54 @@ class WriteLogits(Transform):
 
 ########################
 ########################
+
+
+########################
+#  Logits Save Transform
+########################
+
+
+class AddGuidanceFromScribblesd(InteractiveSegmentationTransform):
+    def __init__(
+        self,
+        scribbles,
+        scribbles_bg_label: int = 2,
+        scribbles_fg_label: int = 3,
+        background: str = "background",
+        foreground: str = "foreground",
+        meta_key_postfix: str = "meta_dict",
+    ):
+        super().__init__(meta_key_postfix)
+        self.scribbles = scribbles
+        self.scribbles_bg_label = scribbles_bg_label
+        self.scribbles_fg_label = scribbles_fg_label
+        self.background = background
+        self.foreground = foreground
+
+    def __call__(self, data):
+        d = dict(data)
+        scribbles = np.squeeze(self._fetch_data(d, self.scribbles))
+
+        background = np.argwhere(scribbles == self.scribbles_bg_label)
+        foreground = np.argwhere(scribbles == self.scribbles_fg_label)
+
+        if self.background not in d.keys():
+            d[self.background] = []
+
+        if self.foreground not in d.keys():
+            d[self.foreground] = []
+
+        background = np.argwhere(scribbles == self.scribbles_bg_label)
+        foreground = np.argwhere(scribbles == self.scribbles_fg_label)
+
+        background = [list(x) for x in background]
+        foreground = [list(x) for x in foreground]
+
+        d[self.background] += background
+        d[self.foreground] += foreground
+
+        return d
+
+
+########################
+########################
