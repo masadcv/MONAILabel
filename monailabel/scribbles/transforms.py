@@ -787,7 +787,7 @@ class WriteLogits(Transform):
 ########################
 
 
-class AddGuidanceFromScribblesd(InteractiveSegmentationTransform):
+class AddPointsFromScribblesd(InteractiveSegmentationTransform):
     def __init__(
         self,
         scribbles,

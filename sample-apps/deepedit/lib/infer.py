@@ -27,7 +27,7 @@ from monai.transforms import (
 
 from monailabel.deepedit.transforms import DiscardAddGuidanced, ResizeGuidanceCustomd, SingleLabelSingleModalityd
 from monailabel.interfaces.tasks.infer import InferTask, InferType
-from monailabel.scribbles.transforms import AddGuidanceFromScribblesd
+from monailabel.scribbles.transforms import AddPointsFromScribblesd
 from monailabel.transform.post import Restored
 
 
@@ -179,7 +179,7 @@ class DeepgrowScribbles(InferTask):
     def pre_transforms(self):
         return [
             LoadImaged(keys=["image", "label"], reader="nibabelreader"),
-            AddGuidanceFromScribblesd(
+            AddPointsFromScribblesd(
                 scribbles="label",
                 scribbles_bg_label=2,
                 scribbles_fg_label=3,
